@@ -1,0 +1,38 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"third_party/matio/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 0,
+			"id" : "getopt::@26f3298372e0e465fa1f"
+		},
+		{
+			"backtrace" : 0,
+			"id" : "matio::@26f3298372e0e465fa1f"
+		}
+	],
+	"id" : "matdump_autogen_timestamp_deps::@26f3298372e0e465fa1f",
+	"isGeneratorProvided" : true,
+	"name" : "matdump_autogen_timestamp_deps",
+	"paths" : 
+	{
+		"build" : "third_party/matio",
+		"source" : "third_party/matio"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

@@ -1,0 +1,26 @@
+matdump_autogen/timestamp: \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CMakeParseArguments.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckCSourceCompiles.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckIncludeFile.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckIncludeFileCXX.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckLibraryExists.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckSymbolExists.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/CheckTypeSize.cmake \
+	C:/Strawberry/c/share/cmake-3.29/Modules/GNUInstallDirs.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release/.qtcreator/cmake-helper/package-manager.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release/.qtcreator/cmake-helper/qtcreator-project.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/CMakeLists.txt \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/compilerOptions.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/conan.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/getopt.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/matioConfig.cmake.in \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/matio_pubconf.cmake.in \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/options.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/src.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/staticAnalyzers.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/test.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/thirdParties.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/tools.cmake \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/snprintf/snprintf.c \
+	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/tools/matdump.c \
+	C:/Strawberry/c/bin/cmake.exe

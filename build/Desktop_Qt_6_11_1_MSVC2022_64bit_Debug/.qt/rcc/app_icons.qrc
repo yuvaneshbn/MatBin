@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file alias="resources/icons/browse.svg">C:/Users/YUVANESH/Desktop/MatBin/resources/icons/browse.svg</file>
+    <file alias="resources/icons/convert.svg">C:/Users/YUVANESH/Desktop/MatBin/resources/icons/convert.svg</file>
+    <file alias="resources/icons/clear.svg">C:/Users/YUVANESH/Desktop/MatBin/resources/icons/clear.svg</file>
+    <file alias="resources/icons/folder.svg">C:/Users/YUVANESH/Desktop/MatBin/resources/icons/folder.svg</file>
+    <file alias="resources/icons/app_logo.svg">C:/Users/YUVANESH/Desktop/MatBin/resources/icons/app_logo.svg</file>
+  </qresource>
+</RCC>
+

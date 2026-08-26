@@ -1,0 +1,27 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"third_party/matio/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"id" : "getopt_autogen_timestamp_deps::@26f3298372e0e465fa1f",
+	"isGeneratorProvided" : true,
+	"name" : "getopt_autogen_timestamp_deps",
+	"paths" : 
+	{
+		"build" : "third_party/matio",
+		"source" : "third_party/matio"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}
