@@ -53,19 +53,19 @@ void MainWindow::setupUi() {
     browseButton = new QPushButton(tr("Add Files..."));
     browseButton->setIcon(QIcon(":/icons/resources/icons/browse.svg"));
 
-    saveAsButton = new QPushButton(tr("Save File As..."));
-    saveAsButton->setIcon(QIcon(":/icons/resources/icons/browse.svg"));
+    removeButton = new QPushButton(tr("Remove Selected"));
+    removeButton->setIcon(QIcon(":/icons/resources/icons/clear.svg"));
 
     clearButton = new QPushButton(tr("Clear Queue"));
     clearButton->setIcon(QIcon(":/icons/resources/icons/clear.svg"));
 
     QSize standardIconSize(20, 20);
     browseButton->setIconSize(standardIconSize);
-    saveAsButton->setIconSize(standardIconSize);
+    removeButton->setIconSize(standardIconSize);
     clearButton->setIconSize(standardIconSize);
 
     fileBtnLayout->addWidget(browseButton);
-    fileBtnLayout->addWidget(saveAsButton);
+    fileBtnLayout->addWidget(removeButton);
     fileBtnLayout->addWidget(clearButton);
     fileBtnLayout->addStretch();
 
@@ -78,12 +78,14 @@ void MainWindow::setupUi() {
     configLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
     dataTypeComboBox = new QComboBox();
+    dataTypeComboBox->addItem(tr("Auto-Detect (Smart Payload Inspector)"), -1);
     dataTypeComboBox->addItem(tr("64-bit Double Precision Float (double) - 8 bytes"), static_cast<int>(BinToMatConverter::DataType::Double64));
     dataTypeComboBox->addItem(tr("32-bit Single Precision Float (float) - 4 bytes"), static_cast<int>(BinToMatConverter::DataType::Single32));
     dataTypeComboBox->addItem(tr("32-bit Signed Integer (int32_t) - 4 bytes"), static_cast<int>(BinToMatConverter::DataType::Int32));
     dataTypeComboBox->addItem(tr("64-bit Signed Integer (int64_t) - 8 bytes"), static_cast<int>(BinToMatConverter::DataType::Int64));
 
     endiannessComboBox = new QComboBox();
+    endiannessComboBox->addItem(tr("Auto-Detect (Smart Payload Inspector)"), -1);
     endiannessComboBox->addItem(tr("Little-Endian (x86-64 / ARM64 Native - Least significant byte stored first)"), static_cast<int>(BinToMatConverter::Endianness::LittleEndianMode));
     endiannessComboBox->addItem(tr("Big-Endian (Network Order) - Most significant byte stored first"), static_cast<int>(BinToMatConverter::Endianness::BigEndianMode));
 
@@ -94,8 +96,9 @@ void MainWindow::setupUi() {
     varNameLineEdit = new QLineEdit("data");
     varNameLineEdit->setPlaceholderText(tr("MATLAB matrix variable name"));
 
+    QString defaultDownloadsOutput = QDir::toNativeSeparators(QDir::homePath() + "/Downloads/MatBin/output");
     outputDirLineEdit = new QLineEdit();
-    outputDirLineEdit->setPlaceholderText(tr("Default: Same folder as binary source"));
+    outputDirLineEdit->setPlaceholderText(defaultDownloadsOutput);
     selectDirBtn = new QPushButton(tr("Browse..."));
     selectDirBtn->setIcon(QIcon(":/icons/resources/icons/folder.svg"));
     selectDirBtn->setIconSize(standardIconSize);
@@ -135,7 +138,7 @@ void MainWindow::setupUi() {
     mainLayout->addWidget(execGroup);
 
     connect(browseButton, &QPushButton::clicked, this, &MainWindow::onBrowseFiles);
-    connect(saveAsButton, &QPushButton::clicked, this, &MainWindow::onSaveFileAs);
+    connect(removeButton, &QPushButton::clicked, this, &MainWindow::onRemoveSelectedFiles);
     connect(selectDirBtn, &QPushButton::clicked, this, &MainWindow::onBrowseOutputDir);
     connect(clearButton, &QPushButton::clicked, this, &MainWindow::onClearQueue);
     connect(convertButton, &QPushButton::clicked, this, &MainWindow::onStartBatchConversion);
@@ -215,6 +218,10 @@ void MainWindow::onBrowseFiles() {
             if (!queuedFiles.contains(filePath)) {
                 queuedFiles.append(filePath);
                 fileListWidget->addItem(filePath);
+
+                BinToMatConverter::DetectionResult detected = BinToMatConverter::autoDetectFormat(filePath);
+                logTextEdit->append(QString("<font color=\"#0288D1\">[AUTO-DETECT] %1: %2</font>")
+                                       .arg(QFileInfo(filePath).fileName(), detected.reason));
             }
         }
     }
@@ -229,29 +236,16 @@ void MainWindow::onBrowseOutputDir() {
     }
 }
 
-void MainWindow::onSaveFileAs() {
-    QString inputBin = QFileDialog::getOpenFileName(
-        this, tr("Select Source Binary File"), QString(), tr("Binary Files (*.bin *.dat);;All Files (*)")
-    );
+void MainWindow::onRemoveSelectedFiles() {
+    if (isProcessing) return;
+    QList<QListWidgetItem*> selectedItems = fileListWidget->selectedItems();
+    if (selectedItems.isEmpty()) return;
 
-    if (inputBin.isEmpty()) return;
-
-    QString defaultMatName = QFileInfo(inputBin).completeBaseName() + ".mat";
-    QString targetMat = QFileDialog::getSaveFileName(
-        this, tr("Save MAT File As"), defaultMatName, tr("MATLAB Container (*.mat)")
-    );
-
-    if (targetMat.isEmpty()) return;
-
-    BinToMatConverter::Settings settings;
-    settings.dataType = static_cast<BinToMatConverter::DataType>(dataTypeComboBox->currentData().toInt());
-    settings.endianness = static_cast<BinToMatConverter::Endianness>(endiannessComboBox->currentData().toInt());
-    settings.channelsCount = channelsSpinBox->value();
-    settings.varName = varNameLineEdit->text().trimmed();
-
-    BinToMatConverter converter;
-    connect(&converter, &BinToMatConverter::statusLogged, this, &MainWindow::onLogReceived);
-    converter.processFile(inputBin, targetMat, settings);
+    for (QListWidgetItem *item : selectedItems) {
+        QString filePath = item->text();
+        queuedFiles.removeAll(filePath);
+        delete fileListWidget->takeItem(fileListWidget->row(item));
+    }
 }
 
 void MainWindow::onClearQueue() {
@@ -263,7 +257,7 @@ void MainWindow::onClearQueue() {
 
 void MainWindow::setControlsEnabled(bool enabled) {
     browseButton->setEnabled(enabled);
-    saveAsButton->setEnabled(enabled);
+    removeButton->setEnabled(enabled);
     selectDirBtn->setEnabled(enabled);
     clearButton->setEnabled(enabled);
     convertButton->setEnabled(enabled);
@@ -286,16 +280,24 @@ void MainWindow::onStartBatchConversion() {
     logTextEdit->clear();
     logTextEdit->append(tr("Initiating conversion execution..."));
 
-    BinToMatConverter::Settings settings;
-    settings.dataType = static_cast<BinToMatConverter::DataType>(dataTypeComboBox->currentData().toInt());
-    settings.endianness = static_cast<BinToMatConverter::Endianness>(endiannessComboBox->currentData().toInt());
-    settings.channelsCount = channelsSpinBox->value();
-    settings.varName = varNameLineEdit->text().trimmed();
+    BinToMatConverter::Settings baseSettings;
+    baseSettings.channelsCount = channelsSpinBox->value();
+    baseSettings.varName = varNameLineEdit->text().trimmed();
+
+    int selectedDataTypeVal = dataTypeComboBox->currentData().toInt();
+    int selectedEndianVal = endiannessComboBox->currentData().toInt();
 
     QString customDir = outputDirLineEdit->text().trimmed();
+    if (customDir.isEmpty()) {
+        customDir = QDir::homePath() + "/Downloads/MatBin/output";
+    }
+
+    // Ensure default or custom export folder exists
+    QDir().mkpath(customDir);
+
     QStringList fileListCopy = queuedFiles;
 
-    QFuture<void> future = QtConcurrent::run([this, fileListCopy, settings, customDir]() {
+    QFuture<void> future = QtConcurrent::run([this, fileListCopy, baseSettings, selectedDataTypeVal, selectedEndianVal, customDir]() {
         try {
             const int totalFiles = fileListCopy.size();
             for (int i = 0; i < totalFiles; ++i) {
@@ -303,19 +305,31 @@ void MainWindow::onStartBatchConversion() {
                 QFileInfo fileInfo(binPath);
                 
                 QString matFileName = fileInfo.completeBaseName() + ".mat";
-                QString matPath;
+                QString matPath = QDir(customDir).filePath(matFileName);
 
-                if (!customDir.isEmpty() && QDir(customDir).exists()) {
-                    matPath = QDir(customDir).filePath(matFileName);
+                BinToMatConverter::Settings fileSettings = baseSettings;
+
+                // 1. Resolve DataType (Auto-Detect if -1, otherwise use user's explicit manual selection)
+                if (selectedDataTypeVal == -1) {
+                    BinToMatConverter::DetectionResult perFileDetect = BinToMatConverter::autoDetectFormat(binPath);
+                    fileSettings.dataType = perFileDetect.dataType;
                 } else {
-                    matPath = fileInfo.dir().filePath(matFileName);
+                    fileSettings.dataType = static_cast<BinToMatConverter::DataType>(selectedDataTypeVal);
+                }
+
+                // 2. Resolve Endianness (Auto-Detect if -1, otherwise use user's explicit manual selection)
+                if (selectedEndianVal == -1) {
+                    BinToMatConverter::DetectionResult perFileDetect = BinToMatConverter::autoDetectFormat(binPath);
+                    fileSettings.endianness = perFileDetect.endianness;
+                } else {
+                    fileSettings.endianness = static_cast<BinToMatConverter::Endianness>(selectedEndianVal);
                 }
 
                 BinToMatConverter converter;
                 connect(&converter, &BinToMatConverter::progressUpdated, this, &MainWindow::onConversionProgress, Qt::QueuedConnection);
                 connect(&converter, &BinToMatConverter::statusLogged, this, &MainWindow::onLogReceived, Qt::QueuedConnection);
 
-                converter.processFile(binPath, matPath, settings);
+                converter.processFile(binPath, matPath, fileSettings);
 
                 int overallProgress = static_cast<int>((static_cast<double>(i + 1) / totalFiles) * 100.0);
                 QMetaObject::invokeMethod(this, [this, overallProgress]() {

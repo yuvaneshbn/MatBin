@@ -41,7 +41,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "MainWindow",
         "onBrowseFiles",
         "",
-        "onSaveFileAs",
+        "onRemoveSelectedFiles",
         "onBrowseOutputDir",
         "onClearQueue",
         "onStartBatchConversion",
@@ -57,7 +57,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
     QtMocHelpers::UintData qt_methods {
         // Slot 'onBrowseFiles'
         QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onSaveFileAs'
+        // Slot 'onRemoveSelectedFiles'
         QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onBrowseOutputDir'
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
@@ -101,7 +101,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->onBrowseFiles(); break;
-        case 1: _t->onSaveFileAs(); break;
+        case 1: _t->onRemoveSelectedFiles(); break;
         case 2: _t->onBrowseOutputDir(); break;
         case 3: _t->onClearQueue(); break;
         case 4: _t->onStartBatchConversion(); break;

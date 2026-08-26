@@ -30,6 +30,13 @@ public:
         QString varName = "data";
     };
 
+    struct DetectionResult {
+        DataType dataType = DataType::Single32;
+        Endianness endianness = Endianness::LittleEndianMode;
+        double confidenceScore = 0.0;
+        QString reason;
+    };
+
     // Alias for backward compatibility
     using ConversionSettings = Settings;
 
@@ -39,6 +46,8 @@ public:
     bool processFile(const QString &binFilePath, 
                      const QString &matFilePath, 
                      const Settings &settings = Settings());
+
+    static DetectionResult autoDetectFormat(const QString &filePath);
 
 signals:
     void progressUpdated(int percentage);

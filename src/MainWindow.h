@@ -23,7 +23,7 @@ public:
 
 private slots:
     void onBrowseFiles();
-    void onSaveFileAs();
+    void onRemoveSelectedFiles();
     void onBrowseOutputDir();
     void onClearQueue();
     void onStartBatchConversion();
@@ -38,7 +38,7 @@ private:
 
     QListWidget *fileListWidget = nullptr;
     QPushButton *browseButton = nullptr;
-    QPushButton *saveAsButton = nullptr;
+    QPushButton *removeButton = nullptr;
     QPushButton *selectDirBtn = nullptr;
     QPushButton *clearButton = nullptr;
     QPushButton *convertButton = nullptr;
