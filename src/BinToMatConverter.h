@@ -14,8 +14,12 @@ public:
     enum class DataType {
         Double64,
         Single32,
+        Int64,
         Int32,
-        Int64
+        Uint16,
+        Int16,
+        Uint8,
+        Int8
     };
 
     enum class Endianness {
@@ -24,15 +28,18 @@ public:
     };
 
     struct Settings {
-        DataType dataType = DataType::Double64;
+        DataType dataType = DataType::Uint16;
         Endianness endianness = Endianness::LittleEndianMode;
         int channelsCount = 1;
         QString varName = "data";
+        qint64 payloadOffset = 0;
     };
 
     struct DetectionResult {
-        DataType dataType = DataType::Single32;
+        DataType dataType = DataType::Uint16;
         Endianness endianness = Endianness::LittleEndianMode;
+        qint64 payloadOffset = 0;
+        qint64 payloadBytes = 0;
         double confidenceScore = 0.0;
         QString reason;
     };

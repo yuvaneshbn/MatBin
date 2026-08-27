@@ -81,8 +81,12 @@ void MainWindow::setupUi() {
     dataTypeComboBox->addItem(tr("Auto-Detect (Smart Payload Inspector)"), -1);
     dataTypeComboBox->addItem(tr("64-bit Double Precision Float (double) - 8 bytes"), static_cast<int>(BinToMatConverter::DataType::Double64));
     dataTypeComboBox->addItem(tr("32-bit Single Precision Float (float) - 4 bytes"), static_cast<int>(BinToMatConverter::DataType::Single32));
-    dataTypeComboBox->addItem(tr("32-bit Signed Integer (int32_t) - 4 bytes"), static_cast<int>(BinToMatConverter::DataType::Int32));
     dataTypeComboBox->addItem(tr("64-bit Signed Integer (int64_t) - 8 bytes"), static_cast<int>(BinToMatConverter::DataType::Int64));
+    dataTypeComboBox->addItem(tr("32-bit Signed Integer (int32_t) - 4 bytes"), static_cast<int>(BinToMatConverter::DataType::Int32));
+    dataTypeComboBox->addItem(tr("16-bit Unsigned Integer (uint16_t) - 2 bytes"), static_cast<int>(BinToMatConverter::DataType::Uint16));
+    dataTypeComboBox->addItem(tr("16-bit Signed Integer (int16_t) - 2 bytes"), static_cast<int>(BinToMatConverter::DataType::Int16));
+    dataTypeComboBox->addItem(tr("8-bit Unsigned Integer (uint8_t) - 1 byte"), static_cast<int>(BinToMatConverter::DataType::Uint8));
+    dataTypeComboBox->addItem(tr("8-bit Signed Integer (int8_t) - 1 byte"), static_cast<int>(BinToMatConverter::DataType::Int8));
 
     endiannessComboBox = new QComboBox();
     endiannessComboBox->addItem(tr("Auto-Detect (Smart Payload Inspector)"), -1);
@@ -148,12 +152,12 @@ void MainWindow::onAboutApplication() {
     QDialog dialog(this);
     dialog.setWindowTitle(tr("About MatBin Application"));
     dialog.setWindowIcon(QIcon(":/icons/resources/icons/app_logo.svg"));
-    dialog.resize(680, 560);
+    dialog.resize(680, 520);
 
     QVBoxLayout *dialogLayout = new QVBoxLayout(&dialog);
 
     QLabel *headerLabel = new QLabel(tr(
-        "<h2>MatBin - Binary to MATLAB MAT File Converter v1.2.0</h2>"
+        "<h2>MatBin - Binary to MATLAB MAT File Converter v1.3.0</h2>"
         "<p><b>Code by:</b> Yuvanesh (MC1)</p>"
         "<p><b>Primary Use:</b> To convert Tercom .bin files to .mat files</p>"
     ), &dialog);
@@ -166,36 +170,34 @@ void MainWindow::onAboutApplication() {
 
     QTextEdit *noteTextEdit = new QTextEdit(&dialog);
     noteTextEdit->setReadOnly(true);
+    noteTextEdit->setStyleSheet(
+        "QTextEdit { "
+        "  background-color: #ffffff; "
+        "  color: #1a252f; "
+        "  border: 1px solid #cfd8dc; "
+        "  border-radius: 4px; "
+        "  padding: 8px; "
+        "  font-size: 12px; "
+        "}"
+    );
     noteTextEdit->setHtml(tr(
         "<style>"
-        "  body { font-size: 11px; font-family: sans-serif; line-height: 1.4; color: #2c3e50; margin: 0; padding: 4px; }"
-        "  h3 { margin: 8px 0 4px 0; color: #1a252f; font-size: 12px; }"
-        "  ul { margin: 4px 0 8px 20px; padding: 0; }"
-        "  li { margin-bottom: 4px; }"
-        "  p { margin: 4px 0; }"
-        "  .note { font-style: italic; color: #7f8c8d; margin-top: 6px; }"
+        "  body { font-size: 12px; font-family: sans-serif; line-height: 1.5; color: #1a252f; margin: 0; padding: 4px; background-color: #ffffff; }"
+        "  b { color: #0d47a1; font-size: 13px; }"
+        "  code { background-color: #eceff1; padding: 2px 5px; border-radius: 3px; color: #b71c1c; font-family: monospace; font-size: 11px; }"
+        "  .warning { color: #b71c1c; font-weight: bold; margin-top: 10px; padding: 8px; background-color: #ffebee; border-radius: 4px; border: 1px solid #ef9a9a; }"
         "</style>"
         
         "<b>1. Batch Queue &amp; File Routing Mechanics</b><br/>"
-        "Managing bulk data extraction requires a blend of automated batch processing and granular user overrides:<br/>"
-        "• <b>Batch Queue (QListWidget):</b> Acts as the central container holding active export tasks or datasets. Users can reorder, add, or remove entries dynamically.<br/>"
-        "• <b>Destination Routing (QFileDialog::getExistingDirectory):</b> Establishes the root directory target for automated batch outputs.<br/>"
-        "• <b>Single-File Overrides (QFileDialog::getSaveFileName):</b> Intercepts the queue workflow for bespoke paths or custom filenames.<br/><br/>"
+        "Managing bulk data extraction requires automated batch processing and user overrides. The Batch Queue container holds active export tasks. Default output destination is <code>C:\\Users\\&lt;User&gt;\\Downloads\\MatBin\\output</code>.<br/><br/>"
         
-        "<b>2. Numerical Precision &amp; Stream Endianness</b><br/>"
-        "Data serialization relies on strict type definitions and byte-ordering configurations:<br/>"
-        "• <b>Memory Byte Widths (S<sub>p</sub> &isin; {4, 8}):</b> Controls allocation footprints: <code>Double64</code> / <code>Int64</code> ($S_p = 8$), <code>Single32</code> / <code>Int32</code> ($S_p = 4$).<br/>"
-        "• <b>Stream Endianness:</b> Determines multi-byte serialization order (Little-Endian native vs. Big-Endian network order).<br/><br/>"
+        "<b>2. Smart Auto-Detection &amp; Precision</b><br/>"
+        "Data serialization automatically identifies precision (Double64, Single32, Int32, Int64, Uint16) and stream endianness (Little-Endian / Big-Endian) upon attaching binary files.<br/><br/>"
         
-        "<b>3. Channel Layout &amp; Dimensionality (M)</b><br/>"
-        "Data shaping dictates array interpretation:<br/>"
-        "• <b>1D Vector Mode (1 &times; E):</b> Treats the dataset as a continuous stream of $E$ elements for single-sensor logs.<br/>"
-        "• <b>2D Matrix Mode (M &times; N):</b> Structures data into $M$ parallel channels across $N$ samples per channel.<br/><br/>"
+        "<b>3. MATLAB Workspace Integration</b><br/>"
+        "Structures numerical data into MATLAB v5 MAT containers under the designated workspace variable (default: <code>'data'</code>) for seamless MATLAB import.<br/><br/>"
         
-        "<b>4. MATLAB Workspace Variable Integration</b><br/>"
-        "Bridges Qt applications with MATLAB environments via dynamic variable injection:<br/>"
-        "• <b>Workspace Symbol (\"data\"):</b> Defines the exact variable name string used when injecting memory buffers.<br/>"
-        "<p class=\"note\"><b>Note:</b> Ensure that matrix mode dimensions (M &times; N) match the expected array shape of the workspace symbol to prevent MATLAB dimensional mismatch errors.</p>"
+        "<div class=\"warning\"><b>Dependency Warning:</b> MATIO C-Library is required for MAT container serialization. If MATIO is not present or fails to initialize, the program will not run and will display an error message.</div>"
     ));
 
     noteLayout->addWidget(noteTextEdit);

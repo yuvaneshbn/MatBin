@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("MatBin");
     app.setOrganizationName("Yuvanesh");
-    app.setApplicationVersion("1.2.0");
+    app.setApplicationVersion("1.3.0");
 
     app.setStyle("Fusion");
 

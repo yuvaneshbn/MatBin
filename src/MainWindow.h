@@ -6,6 +6,8 @@
 #include <QFutureWatcher>
 #include "BinToMatConverter.h"
 
+#include <atomic>
+
 class QListWidget;
 class QPushButton;
 class QTextEdit;
@@ -49,10 +51,13 @@ private:
     QComboBox *dataTypeComboBox = nullptr;
     QComboBox *endiannessComboBox = nullptr;
     QSpinBox *channelsSpinBox = nullptr;
+    QSpinBox *payloadOffsetSpinBox = nullptr;
 
     QStringList queuedFiles;
     QFutureWatcher<void> futureWatcher;
     bool isProcessing = false;
+    std::atomic<int> batchSuccessCount{0};
+    std::atomic<int> batchFailureCount{0};
 };
 
 #endif // MAINWINDOW_H

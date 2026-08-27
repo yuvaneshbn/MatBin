@@ -1,12 +1,12 @@
 matdump_autogen/timestamp: \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CMakeParseArguments.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckCSourceCompiles.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckIncludeFile.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckIncludeFileCXX.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckLibraryExists.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckSymbolExists.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/CheckTypeSize.cmake \
-	C:/Strawberry/c/share/cmake-3.29/Modules/GNUInstallDirs.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeParseArguments.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckCSourceCompiles.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckIncludeFile.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckLibraryExists.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckSymbolExists.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CheckTypeSize.cmake \
+	C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/GNUInstallDirs.cmake \
 	C:/Users/YUVANESH/Desktop/MatBin/build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release/.qtcreator/cmake-helper/package-manager.cmake \
 	C:/Users/YUVANESH/Desktop/MatBin/build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release/.qtcreator/cmake-helper/qtcreator-project.cmake \
 	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/CMakeLists.txt \
@@ -23,4 +23,4 @@ matdump_autogen/timestamp: \
 	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/cmake/tools.cmake \
 	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/snprintf/snprintf.c \
 	C:/Users/YUVANESH/Desktop/MatBin/third_party/matio/tools/matdump.c \
-	C:/Strawberry/c/bin/cmake.exe
+	C:/Qt/Tools/CMake_64/bin/cmake.exe
