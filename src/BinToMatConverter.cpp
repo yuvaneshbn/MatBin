@@ -27,93 +27,149 @@ BinToMatConverter::DetectionResult BinToMatConverter::autoDetectFormat(const QSt
     const qint64 fileSize = file.size();
     if (fileSize == 0) {
         result.reason = "Target binary file is empty";
+        file.close();
         return result;
     }
+
     result.payloadOffset = 0;
     result.payloadBytes = fileSize;
-
-    QString fileName = QFileInfo(filePath).fileName().toLower();
-    if (fileName.contains("uint16") || fileName.contains("u16") || fileName.contains("dem") || fileName.contains("radalt")) {
-        result.dataType = DataType::Uint16;
-        result.endianness = Endianness::LittleEndianMode;
-        result.reason = "Detected 16-bit Unsigned Integer telemetry payload (Uint16)";
-        file.close();
-        return result;
-    } else if (fileName.contains("int16") || fileName.contains("i16")) {
-        result.dataType = DataType::Int16;
-        result.endianness = Endianness::LittleEndianMode;
-        result.reason = "Detected 16-bit Signed Integer telemetry payload (Int16)";
-        file.close();
-        return result;
-    } else if (fileName.contains("float") || fileName.contains("32") || fileName.contains("single")) {
-        result.dataType = DataType::Single32;
-        result.endianness = Endianness::LittleEndianMode;
-        result.reason = "Detected 32-bit Single Precision payload (Float32)";
-        file.close();
-        return result;
-    } else if (fileName.contains("double") || fileName.contains("64")) {
-        result.dataType = DataType::Double64;
-        result.endianness = Endianness::LittleEndianMode;
-        result.reason = "Detected 64-bit Double Precision payload (Double64)";
-        file.close();
-        return result;
-    }
-
-    const qint64 sampleSize = qMin(fileSize, static_cast<qint64>(4096));
-    QByteArray sampleData = file.read(sampleSize);
-    file.close();
-
-    auto scoreUint16 = [](const char *data, qint64 size) -> double {
-        qint64 count = size / 2;
-        if (count == 0) return 0.0;
-        
-        int validHighByteCount = 0;
-        const auto *u8Data = reinterpret_cast<const uint8_t*>(data);
-        
-        uint8_t baseHighByte = u8Data[1];
-        for (qint64 i = 0; i < count; ++i) {
-            uint8_t highByte = u8Data[i * 2 + 1];
-            if (std::abs(static_cast<int>(highByte) - static_cast<int>(baseHighByte)) <= 2) {
-                validHighByteCount++;
-            }
-        }
-        return static_cast<double>(validHighByteCount) / count;
-    };
-
-    auto scoreFloat32 = [](const char *data, qint64 size) -> double {
-        qint64 count = size / 4;
-        if (count == 0) return -1.0;
-        int validCount = 0;
-        for (qint64 i = 0; i < count; ++i) {
-            float val;
-            std::memcpy(&val, data + i * 4, 4);
-            uint32_t bits;
-            std::memcpy(&bits, &val, 4);
-            uint32_t exp = (bits >> 23) & 0xFF;
-
-            if (exp >= 115 && exp <= 145) {
-                validCount += 3;
-            } else if (exp > 0 && exp < 255) {
-                validCount += 1;
-            }
-        }
-        return static_cast<double>(validCount) / (count * 3);
-    };
-
-    double u16Score = scoreUint16(sampleData.constData(), sampleData.size());
-    double f32Score = scoreFloat32(sampleData.constData(), sampleData.size());
-
     result.endianness = Endianness::LittleEndianMode;
 
-    if (u16Score > 0.70 && u16Score > f32Score) {
+    QString fileName = QFileInfo(filePath).fileName().toLower();
+    bool typeDetectedFromName = false;
+
+    if (fileName.contains("uint16") || fileName.contains("u16") ||
+        fileName.contains("dem") || fileName.contains("radalt")) {
         result.dataType = DataType::Uint16;
-        result.reason = "Detected 16-bit Unsigned Integer telemetry stream (Uint16)";
-    } else if (f32Score > 0.60) {
+        result.reason = "Detected 16-bit Unsigned Integer telemetry payload (Uint16)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("int16") || fileName.contains("i16")) {
+        result.dataType = DataType::Int16;
+        result.reason = "Detected 16-bit Signed Integer telemetry payload (Int16)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("float32") || fileName.contains("f32") || fileName.contains("single")) {
         result.dataType = DataType::Single32;
         result.reason = "Detected 32-bit Single Precision payload (Float32)";
-    } else {
-        result.dataType = DataType::Uint16;
-        result.reason = "Fallback default: 16-bit Unsigned Integer telemetry (Uint16)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("double") || fileName.contains("float64") || fileName.contains("f64")) {
+        result.dataType = DataType::Double64;
+        result.reason = "Detected 64-bit Double Precision payload (Double64)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("int32") || fileName.contains("i32")) {
+        result.dataType = DataType::Int32;
+        result.reason = "Detected 32-bit Signed Integer payload (Int32)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("uint32") || fileName.contains("u32")) {
+        result.dataType = DataType::Uint32;
+        result.reason = "Detected 32-bit Unsigned Integer payload (Uint32)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("int64") || fileName.contains("i64")) {
+        result.dataType = DataType::Int64;
+        result.reason = "Detected 64-bit Signed Integer payload (Int64)";
+        typeDetectedFromName = true;
+    } else if (fileName.contains("uint64") || fileName.contains("u64")) {
+        result.dataType = DataType::Uint64;
+        result.reason = "Detected 64-bit Unsigned Integer payload (Uint64)";
+        typeDetectedFromName = true;
+    }
+
+    QByteArray sampleData;
+    if (!typeDetectedFromName) {
+        const qint64 sampleSize = qMin(fileSize, static_cast<qint64>(4096));
+        sampleData = file.read(sampleSize);
+
+        auto scoreUint16 = [](const char *data, qint64 size) -> double {
+            qint64 count = size / 2;
+            if (count == 0) return 0.0;
+            const auto *u8Data = reinterpret_cast<const uint8_t*>(data);
+            uint8_t baseHighByte = u8Data[1];
+            qint64 validHighByteCount = 0;
+            for (qint64 i = 0; i < count; ++i) {
+                uint8_t highByte = u8Data[i * 2 + 1];
+                if (std::abs(static_cast<int>(highByte) - static_cast<int>(baseHighByte)) <= 2) {
+                    ++validHighByteCount;
+                }
+            }
+            return static_cast<double>(validHighByteCount) / count;
+        };
+
+        auto scoreFloat32 = [](const char *data, qint64 size) -> double {
+            qint64 count = size / 4;
+            if (count == 0) return 0.0;
+            int validCount = 0;
+            for (qint64 i = 0; i < count; ++i) {
+                float val;
+                std::memcpy(&val, data + i * 4, 4);
+                uint32_t bits;
+                std::memcpy(&bits, &val, 4);
+                uint32_t exp = (bits >> 23) & 0xFF;
+                if (exp >= 115 && exp <= 145) {
+                    validCount += 3;
+                } else if (exp > 0 && exp < 255) {
+                    validCount += 1;
+                }
+            }
+            return static_cast<double>(validCount) / (count * 3);
+        };
+
+        const double u16Score = scoreUint16(sampleData.constData(), sampleData.size());
+        const double f32Score = scoreFloat32(sampleData.constData(), sampleData.size());
+
+        if (u16Score > 0.70 && u16Score > f32Score) {
+            result.dataType = DataType::Uint16;
+            result.confidenceScore = u16Score;
+            result.reason = "Detected 16-bit Unsigned Integer telemetry stream (Uint16)";
+        } else if (f32Score > 0.60) {
+            result.dataType = DataType::Single32;
+            result.confidenceScore = f32Score;
+            result.reason = "Detected 32-bit Single Precision payload (Float32)";
+        } else {
+            result.dataType = DataType::Uint16;
+            result.reason = "Fallback default: 16-bit Unsigned Integer telemetry (Uint16)";
+        }
+    }
+
+    file.close();
+
+    size_t elementSize = sizeof(uint16_t);
+    switch (result.dataType) {
+        case DataType::Double64: elementSize = sizeof(double); break;
+        case DataType::Single32: elementSize = sizeof(float); break;
+        case DataType::Int64:    elementSize = sizeof(int64_t); break;
+        case DataType::Int32:    elementSize = sizeof(int32_t); break;
+        case DataType::Uint16:   elementSize = sizeof(uint16_t); break;
+        case DataType::Int16:    elementSize = sizeof(int16_t); break;
+        case DataType::Uint8:    elementSize = sizeof(uint8_t); break;
+        case DataType::Int8:     elementSize = sizeof(int8_t); break;
+    }
+
+    result.payloadBytes = fileSize - result.payloadOffset;
+    const qint64 usableBytes = result.payloadBytes - (result.payloadBytes % static_cast<qint64>(elementSize));
+    const quint64 elementCount = static_cast<quint64>(usableBytes / static_cast<qint64>(elementSize));
+
+    if (elementCount > 0) {
+        const quint64 root = static_cast<quint64>(std::sqrt(static_cast<long double>(elementCount)));
+        if (root * root == elementCount) {
+            result.matrixRows = root;
+            result.matrixCols = root;
+            result.matrixConfidence = 1.0;
+            result.reason += QString("; automatic matrix layout: %1 x %1 (exact square element count)").arg(root);
+        } else {
+            quint64 bestRows = 1;
+            quint64 bestCols = elementCount;
+            for (quint64 rows = root; rows >= 1; --rows) {
+                if (elementCount % rows == 0) {
+                    bestRows = rows;
+                    bestCols = elementCount / rows;
+                    break;
+                }
+            }
+            result.matrixRows = bestRows;
+            result.matrixCols = bestCols;
+            result.matrixConfidence = 0.25;
+            result.reason += QString("; automatic matrix candidate: %1 x %2 (closest factor pair)")
+                                 .arg(bestRows).arg(bestCols);
+        }
     }
 
     return result;
@@ -186,7 +242,9 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
         case DataType::Double64: elementSize = sizeof(double); break;
         case DataType::Single32: elementSize = sizeof(float); break;
         case DataType::Int64:    elementSize = sizeof(int64_t); break;
+        case DataType::Uint64:   elementSize = sizeof(uint64_t); break;
         case DataType::Int32:    elementSize = sizeof(int32_t); break;
+        case DataType::Uint32:   elementSize = sizeof(uint32_t); break;
         case DataType::Uint16:   elementSize = sizeof(uint16_t); break;
         case DataType::Int16:    elementSize = sizeof(int16_t); break;
         case DataType::Uint8:    elementSize = sizeof(uint8_t); break;
@@ -209,16 +267,40 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
     }
 
     const size_t totalElements = usableBytes / elementSize;
-    const size_t channels = static_cast<size_t>(qMax(1, settings.channelsCount));
 
-    if (totalElements % channels != 0) {
-        emit statusLogged(tr("Total usable elements (%1) do not divide evenly across %2 channels.")
-                              .arg(totalElements).arg(channels), true);
-        inFile.close();
-        return false;
+    quint64 targetRows = 1;
+    quint64 targetCols = totalElements;
+
+    if (settings.firstDimension > 0) {
+        if (totalElements % settings.firstDimension == 0) {
+            targetRows = settings.firstDimension;
+            targetCols = totalElements / targetRows;
+        } else {
+            emit statusLogged(tr("Selected first dimension (%1) does not divide total elements (%2) evenly.")
+                                  .arg(settings.firstDimension).arg(totalElements), true);
+            inFile.close();
+            return false;
+        }
+    } else {
+        // Auto-Detect: Find optimal square / closest factor pair (e.g. 3600 x 3600 for 12,960,000)
+        quint64 root = static_cast<quint64>(std::sqrt(static_cast<long double>(totalElements)));
+        if (root * root == static_cast<quint64>(totalElements)) {
+            targetRows = root;
+            targetCols = root;
+        } else {
+            for (quint64 r = root; r >= 1; --r) {
+                if (totalElements % r == 0) {
+                    targetRows = r;
+                    targetCols = totalElements / r;
+                    break;
+                }
+            }
+        }
     }
 
-    const size_t totalRecords = totalElements / channels;
+    size_t dims[2] = { static_cast<size_t>(targetRows), static_cast<size_t>(targetCols) };
+    emit statusLogged(tr("Writing MAT matrix dimensions: %1 x %2 (Total elements: %3)")
+                          .arg(targetRows).arg(targetCols).arg(totalElements), false);
 
     QFileInfo matInfo(matPath);
     QDir matDir = matInfo.dir();
@@ -234,7 +316,6 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
         return false;
     }
 
-    size_t dims[2] = { channels, totalRecords };
     bool success = false;
     QString targetVarName = settings.varName.trimmed().isEmpty() ? "data" : settings.varName.trimmed();
 
@@ -286,8 +367,14 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
         case DataType::Int32:
             success = readAndWriteBuffer(static_cast<int32_t*>(nullptr), MAT_C_INT32, MAT_T_INT32);
             break;
+        case DataType::Uint32:
+            success = readAndWriteBuffer(static_cast<uint32_t*>(nullptr), MAT_C_UINT32, MAT_T_UINT32);
+            break;
         case DataType::Int64:
             success = readAndWriteBuffer(static_cast<int64_t*>(nullptr), MAT_C_INT64, MAT_T_INT64);
+            break;
+        case DataType::Uint64:
+            success = readAndWriteBuffer(static_cast<uint64_t*>(nullptr), MAT_C_UINT64, MAT_T_UINT64);
             break;
         case DataType::Uint8:
             success = readAndWriteBuffer(static_cast<uint8_t*>(nullptr), MAT_C_UINT8, MAT_T_UINT8);

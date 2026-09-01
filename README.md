@@ -1,153 +1,120 @@
-# MatBin - Cross-Platform Binary-to-MATLAB Converter
+# MatBin - Cross-Platform Binary-to-MATLAB MAT File Converter v1.3.0
 
-**MatBin** is a production-grade, high-throughput desktop application built with **C++17**, **Qt 6**, and the **MATIO** C library. It ingests raw numerical binary telemetry streams (`.bin`, `.dat`), automatically resolves matrix dimensions without manual user entry, validates data integrity, and serializes payloads into structured MATLAB workspace containers (`.mat`).
+**Code by:** Yuvanesh (MC1)  
+**Primary Use:** Conversions of Tercom `.bin` elevation/telemetry binary logs to MATLAB binary v5 (`.mat`) files.
 
----
-
-## 1. Core Mechanics & Technical Architecture
-
-### 1. Batch Queue & File Routing Mechanics
-Managing bulk data extraction requires a blend of automated batch processing and granular user overrides:
-* **Batch Queue (`QListWidget`):** Acts as the central container holding the sequence of active export tasks or datasets. Users can reorder, add, or remove entries dynamically before triggering a bulk operation.
-* **Destination Routing (`QFileDialog::getExistingDirectory`):** Establishes the root directory target for automated batch outputs, ensuring all processed elements stream into a unified destination path.
-* **Single-File Overrides (`QFileDialog::getSaveFileName`):** Intercepts the automated queue workflow when a user requires a bespoke path or custom filename for a specific high-priority dataset, bypassing the default batch directory.
-
-### 2. Numerical Precision & Stream Endianness
-Data serialization relies on strict type definitions and byte-ordering configurations to maintain cross-platform compatibility:
-* **Memory Byte Widths ($S_p \in \{4, 8\}$):** Controls the allocation footprint per element based on the selected target type:
-  * `Double64` / `Int64`: Allocated at $S_p = 8$ bytes.
-  * `Single32` / `Int32`: Allocated at $S_p = 4$ bytes.
-* **Stream Endianness:** Determines the multi-byte serialization order:
-  * **Little-Endian:** Least significant byte stored first (native to x86/x64 and ARM architectures).
-  * **Big-Endian:** Most significant byte stored first (frequently used in network protocols and legacy systems).
-
-### 3. Channel Layout & Dimensionality ($M$)
-Data shaping dictates how arrays are interpreted by downstream analysis software or export formats:
-* **1D Vector Mode ($1 \times E$):** Treats the dataset as a continuous stream of $E$ elements, ideal for single-sensor time-series logs or flattened signals.
-* **2D Matrix Mode ($M \times N$):** Structures data into $M$ parallel channels across $N$ samples per channel, crucial for multi-channel recordings (e.g., EEG or multi-sensor arrays).
-
-### 4. MATLAB Workspace Variable Integration
-To bridge Qt applications with MATLAB environments, dynamic variable instantiation is used:
-* **Workspace Symbol (`"data"`):** Defines the exact variable name string used when injecting memory buffers directly into the MATLAB workspace. This allows external scripts or automated analysis pipelines to immediately hook into the variable without manual renaming.
-> **Note:** Ensure that the matrix mode dimensions ($M \times N$) match the expected array shape of the workspace symbol to prevent MATLAB dimensional mismatch errors during import.
+**MatBin** is a high-throughput, production-grade desktop application built with **C++17**, **Qt 6**, and the **MATIO** C library. It ingests raw numerical binary telemetry streams (`.bin`, `.dat`), automatically resolves payload precision and optimal matrix dimensions ($R \times C$), provides an interactive 3-tab content inspector (**Data**, **Hex**, **Visual Plot**), and serializes payloads into structured MATLAB workspace containers (`.mat`).
 
 ---
 
-## 2. Ingestion Dynamics & Automated Dimension Resolution
+## 1. Key Features & Capabilities
 
-```
-┌────────────────────────┐      ┌───────────────────────────────┐      ┌─────────────────────────┐
-│   Raw Binary Stream    │ ───► │  Automated Dimension & Stream │ ───► │ MATIO Serialization     │
-│ (.bin, .dat, 4/8-byte) │      │  Validation Engine (E, N, M)  │      │ MATLAB v5 Container     │
-└────────────────────────┘      └───────────────────────────────┘      └─────────────────────────┘
-```
+### 1. Smart Payload Inspection & Auto-Detection
+- **Numerical Precision Inspection**: Identifies element data width automatically upon file attachment:
+  - `Double64` (64-bit double precision float - 8 bytes)
+  - `Single32` (32-bit single precision float - 4 bytes)
+  - `Int64` / `Uint64` (64-bit signed/unsigned integer - 8 bytes)
+  - `Int32` / `Uint32` (32-bit signed/unsigned integer - 4 bytes)
+  - `Int16` / `Uint16` (16-bit signed/unsigned integer - 2 bytes)
+  - `Int8` / `Uint8` (8-bit signed/unsigned integer - 1 byte)
+- **Endianness Auto-Detection**: Distinguishes between native Little-Endian (x86-64 / ARM64) and Big-Endian (Network Order) byte sequences.
+- **Manual Overrides**: Complete manual override controls available for both precision and byte ordering.
 
-1. **Total Numerical Elements ($E$):**
-   $$E = \frac{S_{\text{file}}}{S_p}$$
+### 2. Dynamic Matrix Dimension Factor Selection ($R \times C$)
+- **Auto-Detect Square & Natural Factors**: Automatically calculates the optimal square or natural factor pair ($R \approx \sqrt{N}$). For example, `15_75.bin` ($12,960,000$ `uint16` values) is automatically detected and converted into a **`3600 × 3600`** MAT matrix.
+- **Factor Dropdown Selector**: Dynamically calculates and lists all mathematically valid divisor dimensions for the selected binary file:
+  - `Auto Detect (3600 × 3600)`
+  - `1 × 12,960,000 (Row Vector)`
+  - `2 × 6,480,000`
+  - `3 × 4,320,000`
+  - ...
+  - `3600 × 3600 (Square Matrix)`
+  - ...
+  - `12,960,000 × 1 (Column Vector)`
 
-2. **Total Record Count ($N$):**
-   $$N = \frac{E}{M} = \frac{S_{\text{file}}}{M \cdot S_p}$$
+### 3. Interactive Content Viewer & 2D Heatmap Inspector
+Select any file in the Batch Queue and click **View Contents** to open the 3-tab inspection window:
+- **`Data` Tab**: Formatted 2D matrix table displaying actual numerical values.
+- **`Hex` Tab**: Raw 16-byte hex editor byte dump (`Offset  00 01 ... |ASCII|`) with instant performance streaming.
+- **`Visual Plot` Tab**: Graphical 2D heatmap matrix renderer accompanied by an explicit **Color Shades Legend**:
+  - **Deep Blue / Indigo**: Minimum payload values (Low amplitude/intensity).
+  - **Cyan / Teal**: Lower mid-range values.
+  - **Green / Emerald**: Mid-range baseline values.
+  - **Yellow / Amber**: Upper mid-range values.
+  - **Bright Red / Crimson**: Maximum payload values (High amplitude/intensity).
+- **Responsive Window Sizing & Controls**: Features native **Minimize (_)**, **Maximize (□)**, and **Close (X)** title bar controls, with dynamic screen geometry scaling to guarantee no off-screen overflow.
 
-3. **Stream Modulo Alignment Validation:**
-   $$S_{\text{file}} \pmod{M \cdot S_p} == 0$$
-
-4. **Data Payload & IEEE 754 Validation:**
-   Evaluates floating-point elements with `std::isnan()` and `QDataStream::status()` to catch bit-reversal or stream corruption errors during ingestion.
-
----
-
-## 3. UI Implementation Snippet
-
-```cpp
-// 1. Numerical Precision Selector
-dataTypeComboBox = new QComboBox();
-dataTypeComboBox->addItem(tr("64-bit Double Precision Float (double)"), static_cast<int>(BinToMatConverter::DataType::Double64));
-dataTypeComboBox->addItem(tr("32-bit Single Precision Float (float)"), static_cast<int>(BinToMatConverter::DataType::Single32));
-dataTypeComboBox->addItem(tr("32-bit Signed Integer (int32_t)"), static_cast<int>(BinToMatConverter::DataType::Int32));
-dataTypeComboBox->addItem(tr("64-bit Signed Integer (int64_t)"), static_cast<int>(BinToMatConverter::DataType::Int64));
-
-// 2. Stream Endianness Selector
-endiannessComboBox = new QComboBox();
-endiannessComboBox->addItem(tr("Little-Endian (x86-64 / ARM64 Native)"), static_cast<int>(BinToMatConverter::Endianness::LittleEndianMode));
-endiannessComboBox->addItem(tr("Big-Endian (Network Order)"), static_cast<int>(BinToMatConverter::Endianness::BigEndianMode));
-
-// 3. Channels Per Frame Selector
-channelsSpinBox = new QSpinBox();
-channelsSpinBox->setRange(1, 1024);
-channelsSpinBox->setValue(1);
-
-// 4. Workspace Variable Name Input
-varNameLineEdit = new QLineEdit("data");
-varNameLineEdit->setPlaceholderText(tr("MATLAB matrix variable name"));
-```
+### 4. High-Throughput MATIO Engine & Batch Processing
+- **Queue Management**: Add, remove, or clear queued files dynamically.
+- **Export Destination**: Default output directory set to `C:\Users\<User>\Downloads\MatBin\output` with automatic directory creation.
+- **Zero Compression Overhead**: Fast C-API serialization into MATLAB Version 5 (`MAT_FT_MAT5`) containers.
 
 ---
 
-## 4. MATIO Serialization Engine (Deep Dive)
-
-### Low-Level C-API Execution Flow
+## 2. Technical Architecture & Ingestion Pipeline
 
 ```
-Mat_CreateVer()  --->  Mat_VarCreate()  --->  Mat_VarWrite()  --->  Mat_VarFree()  --->  Mat_Close()
+┌─────────────────────────────────┐      ┌──────────────────────────────────┐      ┌─────────────────────────────┐
+│      Raw Binary File Input      │ ───► │   Smart Payload Inspector &      │ ───► │     MATIO C Serialization   │
+│   (.bin, .dat, 1 to 8-byte)     │      │   Dynamic Factor Engine (R x C)  │      │     MATLAB v5 Container     │
+└─────────────────────────────────┘      └──────────────────────────────────┘      └─────────────────────────────┘
 ```
 
-1. **`Mat_CreateVer(filename, header, MAT_FT_MAT5)`**
-   * Creates or overwrites target file on disk using MATLAB Version 5 container format (`MAT_FT_MAT5`).
-2. **`Mat_VarCreate(name, matClass, matType, rank, dims, dataPtr, opt)`**
-   * Allocates `matvar_t` descriptor for `MAT_C_DOUBLE`, `MAT_C_SINGLE`, `MAT_C_INT32`, or `MAT_C_INT64`.
-3. **`Mat_VarWrite(matfp, var, MAT_COMPRESSION_NONE)`**
-   * Streams contiguous data buffer to disk without compression overhead.
-4. **`Mat_VarFree(var)`** & **`Mat_Close(matfp)`**
-   * Releases wrapper metadata and safely closes file handle.
+### Element Calculation & Modulo Validation
+1. **Total Usable Bytes ($S_{\text{usable}}$):**
+   $$S_{\text{usable}} = S_{\text{file}} - (S_{\text{file}} \pmod{S_p})$$
+
+2. **Total Element Count ($N$):**
+   $$N = \frac{S_{\text{usable}}}{S_p}$$
+
+3. **Matrix Dimensions ($R \times C$):**
+   $$R \cdot C = N \quad \text{where } R \in \text{Divisors}(N)$$
 
 ---
 
-## 5. Output Generation & MATLAB Usage
+## 3. MATLAB Integration & Data Import
+
+To load generated `.mat` files in MATLAB:
 
 ```matlab
-% Load generated MAT container
-load('telemetry_file.mat');
+% Load processed MAT container
+load('C:\Users\<User>\Downloads\MatBin\output\15_75.mat');
 
-% Display dimensions (M channels x N records)
+% Inspect variable dimensions (e.g. 3600 x 3600)
 size(data)
 
-% Access Channel 1
-channel_1 = data(1, :);
+% Display summary statistics
+mean_val = mean(data(:));
+max_val  = max(data(:));
 
-% Access Channel 2
-channel_2 = data(2, :);
-
-% Plot signals
-plot(data(1, :), data(2, :));
-grid on;
+% Render 2D heatmap visualization in MATLAB
+imagesc(data);
+colorbar;
+title('Tercom Elevation Data (15_75)');
 ```
 
 ---
 
-## 6. Building from Source
+## 4. Building from Source
 
 ### Prerequisites
 - **Compiler:** MSVC 2022 (x64), GCC 10+, or Clang 11+
-- **Build System:** CMake 3.16+ & Ninja / MSBuild
-- **Framework:** Qt 6.0+ (`Core`, `Widgets`, `Concurrent`, `Svg`)
+- **Build Tool:** CMake 3.16+ & Ninja / MSBuild
+- **Framework:** Qt 6.0+ (`Core`, `Widgets`, `Concurrent`, `Svg`, `Gui`)
+- **Dependency:** MATIO C-Library (bundled under `third_party/matio`)
 
-### Build Commands
+### Developer Command Prompt Build (MSVC x64)
+
 ```cmd
-cmake -S . -B build -G Ninja
-cmake --build build
-Developer Command Prompt Commands Executed
-1. Release Target Build
-cmd
-
+:: 1. Release Target Build
 call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-cmake -S C:\Users\YUVANESH\Desktop\MatBin -B C:\Users\YUVANESH\Desktop\MatBin\build\Desktop_Qt_6_11_1_MSVC2022_64bit_Release -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:/Qt/6.11.1/msvc2022_64 -G Ninja
-cmake --build C:\Users\YUVANESH\Desktop\MatBin\build\Desktop_Qt_6_11_1_MSVC2022_64bit_Release --config Release
-2. Debug Target Build
-cmd
+cmake -S . -B build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:/Qt/6.11.1/msvc2022_64 -G Ninja
+cmake --build build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release --config Release
 
+:: 2. Debug Target Build
 call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-cmake -S C:\Users\YUVANESH\Desktop\MatBin -B C:\Users\YUVANESH\Desktop\MatBin\build\Desktop_Qt_6_11_1_MSVC2022_64bit_Debug -DCMAKE_PREFIX_PATH=C:/Qt/6.11.1/msvc2022_64 -G Ninja
-cmake --build C:\Users\YUVANESH\Desktop\MatBin\build\Desktop_Qt_6_11_1_MSVC2022_64bit_Debug --config Debug
+cmake -S . -B build/Desktop_Qt_6_11_1_MSVC2022_64bit_Debug -DCMAKE_PREFIX_PATH=C:/Qt/6.11.1/msvc2022_64 -G Ninja
+cmake --build build/Desktop_Qt_6_11_1_MSVC2022_64bit_Debug --config Debug
 ```
 
-The compiled binary will be generated at `build/matbin.exe`.
+The generated executable will be produced at `build/Desktop_Qt_6_11_1_MSVC2022_64bit_Release/matbin.exe`.

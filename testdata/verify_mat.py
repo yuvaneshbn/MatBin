@@ -7,23 +7,16 @@ from scipy.io import loadmat
 # Configuration
 # ============================================================
 
-BIN_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75.bin"
-MAT_FILE = r"C:\Users\YUVANESH\Downloads\MatBin\output\15_75.mat"
+MAT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75.mat"
+TXT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75_mat_contents.txt"
 
+# Variable to export
 VARIABLE_NAME = "data"
 
-# BIN format used by your test
-BIN_DTYPE = "<u2"   # little-endian uint16
-
 
 # ============================================================
-# Check files
+# Check MAT file
 # ============================================================
-
-if not os.path.isfile(BIN_FILE):
-    print("ERROR: BIN file not found:")
-    print(BIN_FILE)
-    sys.exit(1)
 
 if not os.path.isfile(MAT_FILE):
     print("ERROR: MAT file not found:")
@@ -32,29 +25,11 @@ if not os.path.isfile(MAT_FILE):
 
 
 # ============================================================
-# Read BIN
-# ============================================================
-
-print("Reading BIN file...")
-print(f"BIN: {BIN_FILE}")
-
-bin_size = os.path.getsize(BIN_FILE)
-
-if bin_size % 2 != 0:
-    print(
-        f"ERROR: BIN size ({bin_size:,} bytes) is not divisible by 2."
-    )
-    sys.exit(1)
-
-bin_data = np.fromfile(BIN_FILE, dtype=BIN_DTYPE)
-
-
-# ============================================================
-# Read MAT
+# Load MAT file
 # ============================================================
 
 print("Reading MAT file...")
-print(f"MAT: {MAT_FILE}")
+print(f"File: {MAT_FILE}")
 
 try:
     mat = loadmat(MAT_FILE)
@@ -65,152 +40,101 @@ except Exception as e:
 
 
 # ============================================================
-# Check variable
-# ============================================================
-
-if VARIABLE_NAME not in mat:
-    print(f"ERROR: MAT variable '{VARIABLE_NAME}' not found.")
-
-    print("Available variables:")
-    for name in mat:
-        if not name.startswith("__"):
-            print(f"  {name}")
-
-    sys.exit(1)
-
-
-mat_data = np.asarray(mat[VARIABLE_NAME]).ravel()
-
-
-# ============================================================
-# Display information
+# Show variables
 # ============================================================
 
 print()
-print("============================================")
-print("FILE INFORMATION")
-print("============================================")
+print("Variables found in MAT file:")
 
-print(f"BIN size       : {bin_size:,} bytes")
-print(f"BIN elements   : {bin_data.size:,}")
-print(f"BIN dtype      : {bin_data.dtype}")
-
-print()
-
-print(f"MAT variable   : {VARIABLE_NAME}")
-print(f"MAT shape      : {mat[VARIABLE_NAME].shape}")
-print(f"MAT elements   : {mat_data.size:,}")
-print(f"MAT dtype      : {mat_data.dtype}")
-print(f"MAT file size  : {os.path.getsize(MAT_FILE):,} bytes")
-
-
-# ============================================================
-# Compare number of elements
-# ============================================================
-
-print()
-print("============================================")
-print("SIZE CHECK")
-print("============================================")
-
-if bin_data.size != mat_data.size:
-    print("FAIL: Number of elements is different.")
-    print(f"BIN: {bin_data.size:,}")
-    print(f"MAT: {mat_data.size:,}")
-    sys.exit(1)
-
-print("PASS: Number of elements matches.")
-
-
-# ============================================================
-# Compare data type
-# ============================================================
-
-print()
-print("============================================")
-print("DATA TYPE CHECK")
-print("============================================")
-
-if bin_data.dtype != mat_data.dtype:
-    print("WARNING: NumPy dtypes differ.")
-    print(f"BIN dtype: {bin_data.dtype}")
-    print(f"MAT dtype: {mat_data.dtype}")
-else:
-    print("PASS: Data type matches.")
-
-
-# ============================================================
-# Compare every value
-# ============================================================
-
-print()
-print("============================================")
-print("DATA COMPARISON")
-print("============================================")
-
-same = np.array_equal(bin_data, mat_data)
-
-if same:
-    print("PASS: ALL VALUES MATCH.")
-else:
-    print("FAIL: DATA MISMATCH DETECTED.")
-
-    # Find mismatching positions
-    mismatch_indices = np.flatnonzero(bin_data != mat_data)
-
-    print(f"Total mismatches: {mismatch_indices.size:,}")
-
-    # Show first 20 mismatches
-    print()
-    print("First mismatches:")
-
-    for index in mismatch_indices[:20]:
+for name, value in mat.items():
+    if not name.startswith("__"):
         print(
-            f"Index {index:,}: "
-            f"BIN={bin_data[index]}  "
-            f"MAT={mat_data[index]}"
+            f"  {name}: "
+            f"shape={value.shape}, "
+            f"dtype={value.dtype}"
         )
 
 
 # ============================================================
-# First / last samples
+# Check requested variable
 # ============================================================
 
-print()
-print("============================================")
-print("SAMPLE CHECK")
-print("============================================")
-
-print("First 20 BIN values:")
-print(bin_data[:20])
-
-print()
-print("First 20 MAT values:")
-print(mat_data[:20])
-
-print()
-print("Last 20 BIN values:")
-print(bin_data[-20:])
-
-print()
-print("Last 20 MAT values:")
-print(mat_data[-20:])
-
-
-# ============================================================
-# Final result
-# ============================================================
-
-print()
-print("============================================")
-print("FINAL RESULT")
-print("============================================")
-
-if same and bin_data.size == mat_data.size:
-    print("✅ CONVERSION VERIFIED")
-    print("The MAT file contains the same values as the BIN file.")
-    sys.exit(0)
-else:
-    print("❌ CONVERSION FAILED")
-    print("The MAT file does not exactly match the BIN file.")
+if VARIABLE_NAME not in mat:
+    print()
+    print(f"ERROR: Variable '{VARIABLE_NAME}' not found.")
     sys.exit(1)
+
+
+data = np.asarray(mat[VARIABLE_NAME])
+
+
+# ============================================================
+# Create output directory
+# ============================================================
+
+output_dir = os.path.dirname(TXT_FILE)
+
+if output_dir:
+    os.makedirs(output_dir, exist_ok=True)
+
+
+# ============================================================
+# Write complete MAT data to TXT
+# ============================================================
+
+print()
+print("Writing complete MAT data to TXT...")
+
+with open(TXT_FILE, "w", encoding="utf-8") as f:
+
+    f.write("MAT FILE CONTENTS\n")
+    f.write("=" * 70 + "\n")
+    f.write(f"Source MAT file : {MAT_FILE}\n")
+    f.write(f"Variable        : {VARIABLE_NAME}\n")
+    f.write(f"Shape           : {data.shape}\n")
+    f.write(f"Data type       : {data.dtype}\n")
+    f.write(f"Total elements  : {data.size:,}\n")
+    f.write("\n")
+
+    f.write("DATA\n")
+    f.write("=" * 70 + "\n")
+
+    # --------------------------------------------------------
+    # Preserve 2D structure
+    # --------------------------------------------------------
+
+    if data.ndim == 2:
+
+        for row in data:
+            f.write(
+                " ".join(
+                    str(value)
+                    for value in row
+                )
+            )
+            f.write("\n")
+
+    else:
+
+        for value in data.ravel():
+            f.write(f"{value}\n")
+
+
+# ============================================================
+# Result
+# ============================================================
+
+print()
+print("=" * 70)
+print("CONVERSION COMPLETE")
+print("=" * 70)
+
+print(f"MAT file       : {MAT_FILE}")
+print(f"Variable       : {VARIABLE_NAME}")
+print(f"Shape          : {data.shape}")
+print(f"Data type      : {data.dtype}")
+print(f"Elements       : {data.size:,}")
+print(f"TXT file       : {TXT_FILE}")
+print(f"TXT size       : {os.path.getsize(TXT_FILE):,} bytes")
+
+print("=" * 70)

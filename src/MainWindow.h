@@ -27,6 +27,7 @@ private slots:
     void onBrowseFiles();
     void onRemoveSelectedFiles();
     void onBrowseOutputDir();
+    void onViewContents();
     void onClearQueue();
     void onStartBatchConversion();
     void onConversionProgress(int percentage);
@@ -37,6 +38,8 @@ private slots:
 private:
     void setupUi();
     void setControlsEnabled(bool enabled);
+    void updateViewContentsButton();
+    void updateDimensionOptions();
 
     QListWidget *fileListWidget = nullptr;
     QPushButton *browseButton = nullptr;
@@ -44,12 +47,14 @@ private:
     QPushButton *selectDirBtn = nullptr;
     QPushButton *clearButton = nullptr;
     QPushButton *convertButton = nullptr;
+    QPushButton *viewContentsButton = nullptr;
     QLineEdit *varNameLineEdit = nullptr;
     QLineEdit *outputDirLineEdit = nullptr;
     QTextEdit *logTextEdit = nullptr;
     QProgressBar *progressBar = nullptr;
     QComboBox *dataTypeComboBox = nullptr;
     QComboBox *endiannessComboBox = nullptr;
+    QComboBox *dimensionComboBox = nullptr;
     QSpinBox *channelsSpinBox = nullptr;
     QSpinBox *payloadOffsetSpinBox = nullptr;
 

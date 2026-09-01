@@ -43,6 +43,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "",
         "onRemoveSelectedFiles",
         "onBrowseOutputDir",
+        "onViewContents",
         "onClearQueue",
         "onStartBatchConversion",
         "onConversionProgress",
@@ -61,22 +62,24 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onBrowseOutputDir'
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onClearQueue'
+        // Slot 'onViewContents'
         QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onStartBatchConversion'
+        // Slot 'onClearQueue'
         QtMocHelpers::SlotData<void()>(6, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onStartBatchConversion'
+        QtMocHelpers::SlotData<void()>(7, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onConversionProgress'
-        QtMocHelpers::SlotData<void(int)>(7, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::Int, 8 },
+        QtMocHelpers::SlotData<void(int)>(8, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 9 },
         }}),
         // Slot 'onLogReceived'
-        QtMocHelpers::SlotData<void(const QString &, bool)>(9, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 10 }, { QMetaType::Bool, 11 },
+        QtMocHelpers::SlotData<void(const QString &, bool)>(10, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 11 }, { QMetaType::Bool, 12 },
         }}),
         // Slot 'onWorkerFinished'
-        QtMocHelpers::SlotData<void()>(12, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onAboutApplication'
         QtMocHelpers::SlotData<void()>(13, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onAboutApplication'
+        QtMocHelpers::SlotData<void()>(14, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -103,12 +106,13 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 0: _t->onBrowseFiles(); break;
         case 1: _t->onRemoveSelectedFiles(); break;
         case 2: _t->onBrowseOutputDir(); break;
-        case 3: _t->onClearQueue(); break;
-        case 4: _t->onStartBatchConversion(); break;
-        case 5: _t->onConversionProgress((*reinterpret_cast<std::add_pointer_t<int>>(_a[1]))); break;
-        case 6: _t->onLogReceived((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<bool>>(_a[2]))); break;
-        case 7: _t->onWorkerFinished(); break;
-        case 8: _t->onAboutApplication(); break;
+        case 3: _t->onViewContents(); break;
+        case 4: _t->onClearQueue(); break;
+        case 5: _t->onStartBatchConversion(); break;
+        case 6: _t->onConversionProgress((*reinterpret_cast<std::add_pointer_t<int>>(_a[1]))); break;
+        case 7: _t->onLogReceived((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<bool>>(_a[2]))); break;
+        case 8: _t->onWorkerFinished(); break;
+        case 9: _t->onAboutApplication(); break;
         default: ;
         }
     }
@@ -133,14 +137,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 10)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 10;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 9)
+        if (_id < 10)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 9;
+        _id -= 10;
     }
     return _id;
 }

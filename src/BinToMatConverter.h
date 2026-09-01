@@ -15,7 +15,9 @@ public:
         Double64,
         Single32,
         Int64,
+        Uint64,
         Int32,
+        Uint32,
         Uint16,
         Int16,
         Uint8,
@@ -31,6 +33,7 @@ public:
         DataType dataType = DataType::Uint16;
         Endianness endianness = Endianness::LittleEndianMode;
         int channelsCount = 1;
+        quint64 firstDimension = 0;
         QString varName = "data";
         qint64 payloadOffset = 0;
     };
@@ -40,7 +43,10 @@ public:
         Endianness endianness = Endianness::LittleEndianMode;
         qint64 payloadOffset = 0;
         qint64 payloadBytes = 0;
+        quint64 matrixRows = 0;
+        quint64 matrixCols = 0;
         double confidenceScore = 0.0;
+        double matrixConfidence = 0.0;
         QString reason;
     };
 
