@@ -72,8 +72,37 @@ Both BIN and MAT viewers include one-click export actions:
 2. **Total Element Count ($N$):**
    $$N = \frac{S_{\text{usable}}}{S_p}$$
 
-3. **Matrix Dimensions ($R \times C$):**
-   $$R \cdot C = N \quad \text{where } R \in \text{Divisors}(N)$$
+### 3. Graph Dynamic Range & Heatmap Colormap Mechanics
+The visual plot automatically scans the dataset to calculate true payload minimum and maximum values without requiring predefined thresholds.
+
+#### 1. Range Discovery & Delta ($\Delta$)
+- **Minimum Value ($\text{Min}$):** Smallest finite value in the matrix.
+- **Maximum Value ($\text{Max}$):** Largest finite value in the matrix.
+- **Total Span ($\Delta$):**
+  $$\Delta = \text{Max} - \text{Min}$$
+
+#### 2. Pixel Normalization ($n \in [0.0, 1.0]$)
+For every matrix coordinate $(r, c)$ mapped to display pixel $(x, y)$, the value $v = \text{valueAt}(r, c)$ is normalized to a ratio $n$:
+$$n = \frac{v - \text{Min}}{\Delta}$$
+
+#### 3. Continuous Trigonometric RGB Colormap
+To produce smooth, continuous visual gradients without hard block transitions, pixel RGB components are calculated as:
+$$r = \lfloor 255 \cdot n \rfloor$$
+$$g = \lfloor 255 \cdot \sin(n \cdot \pi) \rfloor$$
+$$b = \lfloor 255 \cdot (1.0 - n) \rfloor$$
+
+#### 4. Dynamic 5-Band Color Legend Ranges
+The Color Legend divides $[\text{Min}, \text{Max}]$ into 5 equal $20\%$ intervals ($i \in \{0, 1, 2, 3, 4\}$):
+$$\text{Band Low}_i = \text{Min} + \Delta \times \left(\frac{i}{5}\right)$$
+$$\text{Band High}_i = \text{Min} + \Delta \times \left(\frac{i + 1}{5}\right)$$
+
+| Band | Span | Color Swatch | Meaning | Calculated Interval |
+| :---: | :---: | :--- | :--- | :--- |
+| **0** | $0\% - 20\%$ | 🟦 **Deep Blue / Indigo** | Minimum values (lowest range) | $[\text{Min},\, \text{Min} + 0.2\Delta]$ |
+| **1** | $20\% - 40\%$ | 🟩 **Cyan / Teal** | Lower mid-range values | $[\text{Min} + 0.2\Delta,\, \text{Min} + 0.4\Delta]$ |
+| **2** | $40\% - 60\%$ | 🟩 **Green / Emerald** | Mid-range / baseline values | $[\text{Min} + 0.4\Delta,\, \text{Min} + 0.6\Delta]$ |
+| **3** | $60\% - 80\%$ | 🟨 **Yellow / Amber** | Upper mid-range values | $[\text{Min} + 0.6\Delta,\, \text{Min} + 0.8\Delta]$ |
+| **4** | $80\% - 100\%$ | 🟥 **Bright Red / Crimson** | Maximum values (highest range) | $[\text{Min} + 0.8\Delta,\, \text{Max}]$ |
 
 ---
 

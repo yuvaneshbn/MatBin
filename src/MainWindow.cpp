@@ -233,7 +233,10 @@ void MainWindow::onAboutApplication() {
         "<b>4. Interactive Content Viewers &amp; Export Tools</b><br/>"
         "Features dedicated BIN and MAT Content Viewers with a 3-tab inspector window: Data numerical matrix table, virtual-paged dark Hex console, and 2D Visual Plot thermal heatmap with continuous color gradient and calculated numeric ranges. Includes one-click <b>Save Graph Image</b> (.png/.jpg/.bmp) and <b>Save as .asc</b> (ESRI ASCII Grid) matrix export.<br/><br/>"
 
-        "<b>5. MATLAB Workspace Integration</b><br/>"
+        "<b>5. Graph Dynamic Range &amp; Colormap Mechanics</b><br/>"
+        "The visual plot scans the entire dataset to compute true <code>Min</code> and <code>Max</code> values (Range &Delta; = Max &minus; Min). Every pixel is normalized to a ratio <code>n = (v &minus; Min) / &Delta;</code> (where 0.0 &le; n &le; 1.0) using a smooth trigonometric RGB palette (r = 255 &times; n, g = 255 &times; sin(n &times; &pi;), b = 255 &times; (1 &minus; n)). The 5-band color legend dynamically partitions the [Min, Max] span into 20% intervals (Deep Blue &rarr; Cyan &rarr; Green &rarr; Yellow &rarr; Crimson Red) displaying computed numerical ranges.<br/><br/>"
+
+        "<b>6. MATLAB Workspace Integration</b><br/>"
         "Structures numerical data into MATLAB v5 MAT containers under the designated workspace variable (default: <code>'data'</code>) for direct MATLAB import.<br/><br/>"
         
         "<div class=\"warning\"><b>Dependency Warning:</b> MATIO C-Library is required for MAT container serialization. If MATIO is not present or fails to initialize, the program will not run and will display an error message.</div>"
