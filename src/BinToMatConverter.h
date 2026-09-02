@@ -33,7 +33,6 @@ public:
         DataType dataType = DataType::Uint16;
         Endianness endianness = Endianness::LittleEndianMode;
         int channelsCount = 1;
-        quint64 firstDimension = 0;
         QString varName = "data";
         qint64 payloadOffset = 0;
     };

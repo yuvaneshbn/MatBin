@@ -7,8 +7,8 @@ from scipy.io import loadmat
 # Configuration
 # ============================================================
 
-MAT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75.mat"
-TXT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75_mat_contents.txt"
+MAT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\14_76.mat"
+TXT_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\14_76_mat_contents.txt"
 
 # Variable to export
 VARIABLE_NAME = "data"

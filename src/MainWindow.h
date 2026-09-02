@@ -34,6 +34,7 @@ private slots:
     void onLogReceived(const QString &message, bool isError);
     void onWorkerFinished();
     void onAboutApplication();
+    void onOpenMatContentViewer();
 
 private:
     void setupUi();
@@ -48,6 +49,7 @@ private:
     QPushButton *clearButton = nullptr;
     QPushButton *convertButton = nullptr;
     QPushButton *viewContentsButton = nullptr;
+    QPushButton *contentViewerButton = nullptr;
     QLineEdit *varNameLineEdit = nullptr;
     QLineEdit *outputDirLineEdit = nullptr;
     QTextEdit *logTextEdit = nullptr;

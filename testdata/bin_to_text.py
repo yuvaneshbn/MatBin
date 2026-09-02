@@ -9,11 +9,11 @@ import numpy as np
 # Configuration
 # ============================================================
 
-BIN_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\15_75.bin"
+BIN_FILE = r"C:\Users\YUVANESH\Desktop\MatBin\testdata\14_76.bin"
 
 REPORT_FILE = (
     r"C:\Users\YUVANESH\Desktop\MatBin\testdata"
-    r"\15_75_format_report.txt"
+    r"\14_76_format_report.txt"
 )
 
 
@@ -304,7 +304,7 @@ def format_score(name, result):
             score += 20
 
     # Special preference for the format already strongly
-    # supported by your 15_75.bin test.
+    # supported by your 14_76.bin test.
     if name == "uint16 little-endian":
 
         if 0 <= minimum <= 65535:

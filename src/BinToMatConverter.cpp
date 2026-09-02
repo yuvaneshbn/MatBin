@@ -59,17 +59,9 @@ BinToMatConverter::DetectionResult BinToMatConverter::autoDetectFormat(const QSt
         result.dataType = DataType::Int32;
         result.reason = "Detected 32-bit Signed Integer payload (Int32)";
         typeDetectedFromName = true;
-    } else if (fileName.contains("uint32") || fileName.contains("u32")) {
-        result.dataType = DataType::Uint32;
-        result.reason = "Detected 32-bit Unsigned Integer payload (Uint32)";
-        typeDetectedFromName = true;
     } else if (fileName.contains("int64") || fileName.contains("i64")) {
         result.dataType = DataType::Int64;
         result.reason = "Detected 64-bit Signed Integer payload (Int64)";
-        typeDetectedFromName = true;
-    } else if (fileName.contains("uint64") || fileName.contains("u64")) {
-        result.dataType = DataType::Uint64;
-        result.reason = "Detected 64-bit Unsigned Integer payload (Uint64)";
         typeDetectedFromName = true;
     }
 
@@ -242,9 +234,7 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
         case DataType::Double64: elementSize = sizeof(double); break;
         case DataType::Single32: elementSize = sizeof(float); break;
         case DataType::Int64:    elementSize = sizeof(int64_t); break;
-        case DataType::Uint64:   elementSize = sizeof(uint64_t); break;
         case DataType::Int32:    elementSize = sizeof(int32_t); break;
-        case DataType::Uint32:   elementSize = sizeof(uint32_t); break;
         case DataType::Uint16:   elementSize = sizeof(uint16_t); break;
         case DataType::Int16:    elementSize = sizeof(int16_t); break;
         case DataType::Uint8:    elementSize = sizeof(uint8_t); break;
@@ -267,40 +257,16 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
     }
 
     const size_t totalElements = usableBytes / elementSize;
+    const size_t channels = static_cast<size_t>(qMax(1, settings.channelsCount));
 
-    quint64 targetRows = 1;
-    quint64 targetCols = totalElements;
-
-    if (settings.firstDimension > 0) {
-        if (totalElements % settings.firstDimension == 0) {
-            targetRows = settings.firstDimension;
-            targetCols = totalElements / targetRows;
-        } else {
-            emit statusLogged(tr("Selected first dimension (%1) does not divide total elements (%2) evenly.")
-                                  .arg(settings.firstDimension).arg(totalElements), true);
-            inFile.close();
-            return false;
-        }
-    } else {
-        // Auto-Detect: Find optimal square / closest factor pair (e.g. 3600 x 3600 for 12,960,000)
-        quint64 root = static_cast<quint64>(std::sqrt(static_cast<long double>(totalElements)));
-        if (root * root == static_cast<quint64>(totalElements)) {
-            targetRows = root;
-            targetCols = root;
-        } else {
-            for (quint64 r = root; r >= 1; --r) {
-                if (totalElements % r == 0) {
-                    targetRows = r;
-                    targetCols = totalElements / r;
-                    break;
-                }
-            }
-        }
+    if (totalElements % channels != 0) {
+        emit statusLogged(tr("Total usable elements (%1) do not divide evenly across %2 channels.")
+                              .arg(totalElements).arg(channels), true);
+        inFile.close();
+        return false;
     }
 
-    size_t dims[2] = { static_cast<size_t>(targetRows), static_cast<size_t>(targetCols) };
-    emit statusLogged(tr("Writing MAT matrix dimensions: %1 x %2 (Total elements: %3)")
-                          .arg(targetRows).arg(targetCols).arg(totalElements), false);
+    const size_t totalRecords = totalElements / channels;
 
     QFileInfo matInfo(matPath);
     QDir matDir = matInfo.dir();
@@ -316,6 +282,7 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
         return false;
     }
 
+    size_t dims[2] = { channels, totalRecords };
     bool success = false;
     QString targetVarName = settings.varName.trimmed().isEmpty() ? "data" : settings.varName.trimmed();
 
@@ -342,7 +309,26 @@ bool BinToMatConverter::readAndWriteData(const QString &binPath,
             swapBufferBytes(buffer.data(), totalElements);
         }
 
-        matvar_t *var = Mat_VarCreate(targetVarName.toUtf8().constData(), classType, dataTypeEnum, 2, dims, buffer.data(), 0);
+        // The source BIN stream is treated as row-major (row 0, then row 1, ...).
+        // MATLAB/MATIO stores a 2-D matrix in column-major order. Reorder the
+        // values so that the matrix displayed in MATLAB has the same R x C
+        // arrangement as the source BIN matrix.
+        std::vector<T> matBuffer;
+        try {
+            matBuffer.resize(totalElements);
+        } catch (const std::bad_alloc &) {
+            emit statusLogged(tr("Memory allocation failed while preparing MATLAB matrix."), true);
+            return false;
+        }
+
+        for (size_t row = 0; row < channels; ++row) {
+            for (size_t col = 0; col < totalRecords; ++col) {
+                matBuffer[col * channels + row] =
+                    buffer[row * totalRecords + col];
+            }
+        }
+
+        matvar_t *var = Mat_VarCreate(targetVarName.toUtf8().constData(), classType, dataTypeEnum, 2, dims, matBuffer.data(), 0);
         if (var) {
             bool writeOk = (Mat_VarWrite(matfp, var, MAT_COMPRESSION_NONE) == 0);
             Mat_VarFree(var);
